@@ -10,7 +10,7 @@ import './App.css';
 // ============================================
 // API BASE URL
 // ============================================
-const API_URL = process.env.REACT_APP_API_URL || '/api';
+const API_URL = 'http://localhost:3001/api';
 
 // ============================================
 // AUTH CONTEXT (manages user state)
@@ -143,12 +143,13 @@ function HomePage() {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
 
     setIsSearching(true);
     try {
+      // If search is empty, get all roles
+      const query = searchQuery.trim() || '%'; // % is SQL wildcard for "all"
       const response = await axios.get(`${API_URL}/roles/search`, {
-        params: { query: searchQuery }
+        params: { query }
       });
       setSearchResults(response.data.roles);
     } catch (error) {
@@ -162,14 +163,14 @@ function HomePage() {
   return (
     <div className="page home-page">
       <div className="hero">
-        <h2>Find Your Role.</h2>
-        <p>You've applied, what's next? Connect anonymously with others in the competitive pipeline. Share insights, timelines, and provide support.</p>
+        <h2><strong>You've applied. What's next?</strong></h2>
+        <p>Find your role. Connect anonymously with others in the pipeline, compare timelines, and share signals while your application is Under Review.</p>
       </div>
 
       <form onSubmit={handleSearch} className="search-form">
         <input
           type="text"
-          placeholder="Search for a role (e.g., Evisort Sr. Management Consultant)"
+          placeholder="Search for a role or company (e.g., McKinsey Associate)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="search-input"
@@ -386,6 +387,8 @@ function RolePage() {
   const [tracking, setTracking] = useState(null);
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingInsightId, setEditingInsightId] = useState(null);
+  const [editContent, setEditContent] = useState('');
   
   const [showInsightForm, setShowInsightForm] = useState(false);
   const [insightForm, setInsightForm] = useState({
@@ -674,10 +677,59 @@ function RolePage() {
               .map(insight => (
                 <div key={insight.id} className="insight-card">
                   <div className="insight-header">
-                    <span className="insight-author">{insight.author_username}</span>
-                    <span className="insight-type">{insight.insight_type.replace('_', ' ')}</span>
+                    <div className="insight-meta">
+                      <span className="insight-author">{insight.author_username}</span>
+                      <span className="insight-type">{insight.insight_type.replace('_', ' ')}</span>
+                    </div>
+                    {user && insight.author_id === user.id && (
+                      <div className="insight-actions">
+                        <button 
+                          onClick={() => {
+                            setEditingInsightId(insight.id);
+                            setEditContent(insight.content);
+                          }}
+                          className="insight-action-btn"
+                          title="Edit"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteInsight(insight.id)}
+                          className="insight-action-btn"
+                          title="Delete"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
                   </div>
-                  <p className="insight-content">{insight.content}</p>
+                  
+                  {editingInsightId === insight.id ? (
+                    <div className="insight-edit-form">
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        rows="3"
+                      />
+                      <div className="edit-actions">
+                        <button onClick={() => handleEditInsight(insight.id)} className="btn-primary">
+                          Save
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setEditingInsightId(null);
+                            setEditContent('');
+                          }}
+                          className="btn-secondary"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="insight-content">{insight.content}</p>
+                  )}
+                  
                   <span className="insight-date">
                     {new Date(insight.created_at).toLocaleDateString()}
                   </span>

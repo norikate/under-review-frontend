@@ -614,6 +614,32 @@ main {
   margin-bottom: 1rem;
 }
 
+.insight-meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex: 1;
+}
+
+.insight-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.insight-action-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: opacity 0.2s;
+}
+
+.insight-action-btn:hover {
+  opacity: 1;
+}
+
 .insight-author {
   font-weight: 600;
   color: #2d3748;
